@@ -90,9 +90,3 @@ class IFSDataset:
         df = df.set_index(pd.to_datetime(df['date']))[indicator].astype('float')
         data.pop("Obs")
         return df, data
-
-
-
-
-
-
