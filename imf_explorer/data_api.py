@@ -78,7 +78,7 @@ class IFSDataset:
         query_string = f"IFS/{freq}.{area}.{indicator}?startPeriod={start_period}&endPeriod={end_period}"
         raw = requests.get(os.path.join(IMF_BASE_URL, "CompactData", query_string)).json()
         if "Series" not in raw['CompactData']['DataSet']:
-            print("Series data not found, try again with a different frequency or time periods")
+            print("Series data not found, try again with a different frequency and/or time periods")
             return None, None
 
         data = raw['CompactData']['DataSet']["Series"]
