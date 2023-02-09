@@ -71,12 +71,7 @@ class IFSDataset:
                     result[ind] = d
         return result
 
-    def query(self, freq="", area="", indicator="", start_period="2001-01-01", end_period="2001-12-31"):
-        assert (self.is_valid_query_freq(freq) and self.is_valid_query_area(area)
-                and self.is_valid_query_indicator(indicator)
-                )
-        query_string = f"IFS/{freq}.{area}.{indicator}?startPeriod={start_period}&endPeriod={end_period}"
-        raw = requests.get(os.path.join(IMF_BASE_URL, "CompactData", query_string)).json()
+    def process_raw_response(self, raw, indicator):
         if "Series" not in raw['CompactData']['DataSet']:
             print("Series data not found, try again with a different frequency and/or time periods")
             return None, None
@@ -90,3 +85,18 @@ class IFSDataset:
         df = df.set_index(pd.to_datetime(df['date']))[[indicator]].astype('float')
         data.pop("Obs")
         return df, data
+
+    def query(self, freq="", area="", indicator="", start_period="2001-01-01", end_period="2001-12-31"):
+        assert (self.is_valid_query_freq(freq) and self.is_valid_query_area(area)
+                and self.is_valid_query_indicator(indicator)
+                )
+        query_string = f"IFS/{freq}.{area}.{indicator}?startPeriod={start_period}&endPeriod={end_period}"
+        raw = requests.get(os.path.join(IMF_BASE_URL, "CompactData", query_string)).json()
+        return self.process_raw_response(raw, indicator)
+
+    def query_with_string(self, q=""):
+        indicator = q.split(".")[-1].split("?")[0]
+        assert self.is_valid_query_indicator(indicator), f"Query must contain valid indicator not {indicator}"
+        query_string = f"IFS/{q}"
+        raw = requests.get(os.path.join(IMF_BASE_URL, "CompactData", query_string)).json()
+        return self.process_raw_response(raw, indicator)
