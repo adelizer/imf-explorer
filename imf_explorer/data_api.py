@@ -87,6 +87,6 @@ class IFSDataset:
 
         df = pd.DataFrame(data_list, columns=['date', indicator])
 
-        df = df.set_index(pd.to_datetime(df['date']))[indicator].astype('float')
+        df = df.set_index(pd.to_datetime(df['date']))[[indicator]].astype('float')
         data.pop("Obs")
         return df, data
