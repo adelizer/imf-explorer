@@ -9,8 +9,18 @@
   <body><p>
     <h1>The easiest way to visualize, interact, and download IMF macro economic global trends</h1>
     <select id="dropdown"></select>
+    <input type="radio" id="option1" name="options" value="M" checked>
+    <label for="option1">Monthly</label>
+
+    <input type="radio" id="option2" name="options" value="Q">
+    <label for="option2">Quarterly</label>
+
+    <input type="radio" id="option3" name="options" value="A">
+    <label for="option3">Annualy</label>
+
+
     <button id="chart-butten" onclick="modifyIndicator()">Plot</button>
-    <div id="chart" style="width:600px;height:250px;"></div>
+    <div id="chart" style="width:800px;height:300px;"></div>
     <script src="index.js"></script>
   </body>
 </html>

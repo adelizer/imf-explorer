@@ -2,6 +2,28 @@ const INTERNAL_SERVER = "http://localhost:8000/"
 let chart = document.getElementById('chart');
 const dropdown = document.getElementById('dropdown');
 
+const radioButtons = document.querySelectorAll('input[name="options"]');
+
+function getSelectedFrequency(){
+    let selectedValue;
+    for (const button of radioButtons) {
+      if (button.checked) {
+        selectedValue = button.value;
+        break;
+      }
+    }
+    return selectedValue;
+}
+
+for (const button of radioButtons) {
+    button.addEventListener('change', function() {
+        selectedValue = getSelectedFrequency()
+      
+    });
+  }
+
+
+
 // options.forEach(function(option) {
 //     const optionElement = document.createElement('option');
 //     optionElement.value = option;
@@ -69,7 +91,8 @@ function entrypoint(){
 function modifyIndicator(){
 
     indicator = dropdown.value
-    let data = query_indicator(`M.US.${indicator}?startPeriod=2001-01-01&endPeriod=2022-12-31`);
+    freq = getSelectedFrequency()
+    let data = query_indicator(`${freq}.US.${indicator}?startPeriod=2001-01-01&endPeriod=2022-12-31`);
 }
 
 document.addEventListener("DOMContentLoaded", function() {
