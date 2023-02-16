@@ -36,18 +36,18 @@ function updateSelectedFrequency(){
 for (const button of radioButtons) {
     button.addEventListener('change', function() {
         updateSelectedFrequency();
+        queryIndicator();
     });
 }
 startDate.addEventListener('change', function() {
     startDateValue = startDate.value
+    queryIndicator();
     console.log(startDateValue)
 })
 endDate.addEventListener('change', function() {
     endDateValue = endDate.value
+    queryIndicator();
     console.log(endDateValue)
-})
-updateChartButton.addEventListener("click", function() {
-    console.log("clicked")
 })
 
 AreaSearchInput.addEventListener("input", function() {
@@ -80,31 +80,52 @@ IndicatorSearchInput.addEventListener("input", function() {
   });
 
 function updateSelectedIndicator(c){
-    let newValue = c.srcElement.value;
-    selectedIndicator = newValue;
+    console.log(c.srcElement)
+    if (c.srcElement.checked == true){
+        selectedIndicator = selectedIndicator + `+${c.srcElement.value}`
+    } else{
+        selectedIndicator = selectedIndicator.replace(c.srcElement.value, '')
+    }
+    if (selectedIndicator.startsWith("+")){
+        selectedIndicator = selectedIndicator.substring(1)
+    }
+    if (selectedIndicator.endsWith("+")){
+        selectedIndicator = selectedIndicator.slice(0, -1)
+    }
+    console.log(selectedIndicator)
+    // selectedIndicator = newValue;
 
-    let options = document.querySelectorAll(".indicator-multiselect-options label");
+    // let options = document.querySelectorAll(".indicator-multiselect-options label");
 
-    options.forEach(function(option) {
-        if (option.children[0].value != newValue){
-            option.children[0].checked = false;
-        }
+    // options.forEach(function(option) {
+    //     if (option.children[0].value != newValue){
+    //         option.children[0].checked = false;
+    //     }
         
-    });
+    // });
     queryIndicator();
 }
 
 function updateSelectedArea(c){
-    console.log("updateSelectedArea callback")
-    let newValue = c.srcElement.value;
-    selectedArea = newValue;
-    let options = document.querySelectorAll(".area-multiselect-options label");
+    console.log(c.srcElement)
+    if (c.srcElement.checked == true){
+        selectedArea = selectedArea + `+${c.srcElement.value}`
+    } else{
+        selectedArea = selectedArea.replace(c.srcElement.value, '')
+    }
+    if (selectedArea.startsWith("+")){
+        selectedArea = selectedArea.substring(1)
+    }
+    if (selectedArea.endsWith("+")){
+        selectedArea = selectedArea.slice(0, -1)
+    }
+    // let options = document.querySelectorAll(".area-multiselect-options label");
 
-    options.forEach(function(option) {
-        if (option.children[0].value != newValue){
-            option.children[0].checked = false;
-        }
-    });
+    // options.forEach(function(option) {
+    //     if (option.children[0].value != newValue){
+    //         option.children[0].checked = false;
+    //     }
+    // });
     queryIndicator();
     console.log("selected area: " + selectedArea)
 }
@@ -170,41 +191,45 @@ function queryIndicator() {
     fetch("http://localhost:8000/query", options)
     .then(res => res.json())
     .then(res => {
-    if ("metadata" in res){
-        x = res["date"]
-        y = res["value"]
-        metadata = res["metadata"]
-        console.log(metadata)
-        var trace0 = {
-            x: x,
-            y: y,
-            mode: 'lines+markers',
-            type: 'scatter',
-            marker: {
-                opacity: 0.5,
-            }
-        };
+    if (res.data.length > 0){
+
+        let traces = []
+        for (let i= 0; i<res.data.length; i++){
+            let curr = res.data[i]
+            let trace = {
+                x: curr["x"],
+                y: curr["y"],
+                mode: 'lines+markers',
+                type: 'scatter',
+                marker: {
+                    opacity: 0.5,
+                },
+                name: curr["identifier"],
+            };
+            traces.push(trace);
+        }
+
+        
         var layout = {
             title: {
-                text: `${metadata.Area} - ${metadata.Indicator}`
+                text: `IMF Data Chart`
             },
             margin: { t: 100 },
             xaxis: {
                 title: {
-                    text: `TimeFormat: ${metadata.TimeFormat}`
+                    text: `Date`
                 }
             },
-            yaxis: {
-                title: {
-                    text: `Units: ${metadata.Units}`
-                }
             }
+            Plotly.newPlot(chart, traces, layout);
         };
-        Plotly.newPlot(chart, [trace0], layout);
-    }
-    else{
-        window.alert(["No data found with the specified values choose different indicators/areas/freq/time range"]);
-    }
+        
+    
+        
+    // }
+    // else{
+    //     window.alert(["No data found with the specified values choose different indicators/areas/freq/time range"]);
+    // }
     })
     
 }
@@ -216,20 +241,9 @@ function entrypoint(){
     populateIndicators();
     queryIndicator();
     
-    // .then(res => console.log(res)))
-    // Display the first chart
-    // Get a list of all available indicators
-    // let indicators = query_metadata();
-    // let data = query_indicator(`M.US.PMP_IX?startPeriod=2001-01-01&endPeriod=2022-12-31`);
-    // console.log(data);
 }
 
 
-// function modifyIndicator(){
-//     indicator = dropdown.value
-//     freq = getSelectedFrequency()
-//     let data = query_indicator(`${freq}.US.${indicator}?startPeriod=2001-01-01&endPeriod=2022-12-31`);
-// }
 
 document.addEventListener("DOMContentLoaded", function() {
     entrypoint();

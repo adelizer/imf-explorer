@@ -68,19 +68,18 @@ async def get_data(item: Item):
     query_string = f"http://dataservices.imf.org/REST/SDMX_JSON.svc/CompactData/IFS/{q}"
     try:
         raw = requests.get(query_string).json()
-        response = raw['CompactData']['DataSet']["Series"]
-        data_list = [[obs.get('@TIME_PERIOD'), obs.get('@OBS_VALUE')]
-                     for obs in response['Obs']]
-        result = {"date": [x[0] for x in data_list], "value": [x[1] for x in data_list]}
-        metadata = {
-            "Frequency": response['@FREQ'] + " - " + codes_dict["CL_FREQ"][response['@FREQ']],
-            "Area": response['@REF_AREA'] + " - " + codes_dict["CL_AREA_IFS"][response['@REF_AREA']],
-            "Indicator": response['@INDICATOR'] + " - " + indicators[response['@INDICATOR']],
-            "Units": response['@UNIT_MULT'] + " - " + codes_dict["CL_UNIT_MULT"][response['@UNIT_MULT']],
-            "TimeFormat": response['@TIME_FORMAT'] + " - " + codes_dict["CL_TIME_FORMAT"][response['@TIME_FORMAT']],
-        }
-        result["metadata"] = metadata
-        return result
+        data = raw['CompactData']['DataSet']["Series"]
+        if isinstance(data, dict):
+            data = [data]
+        data_list = []
+        for series in data:
+            if len(series["Obs"]) <= 1:
+                continue
+            else:
+                tmp = [[obs.get('@TIME_PERIOD'), obs.get('@OBS_VALUE')] for obs in series['Obs']]
+                data_list.append({"identifier": f'{series["@FREQ"]}-{series["@REF_AREA"]}-{series["@INDICATOR"]}', "x": [x[0] for x in tmp], "y": [x[1] for x in tmp]})
+
+        return {"data": data_list}
     except:
         return {}
 
