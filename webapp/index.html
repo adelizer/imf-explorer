@@ -3,24 +3,56 @@
   <head>
     <meta charset="utf-8" />
     <title>Charting IMF</title>
+    <link rel="stylesheet" href="index.css">
     <script src="https://cdn.plot.ly/plotly-2.18.0.min.js"></script>
   </head>
 
   <body><p>
-    <h1>The easiest way to visualize, interact, and download IMF macro economic global trends</h1>
-    <select id="dropdown"></select>
+    <h1>The easiest way to visualize, interact, and download IMF macro economic global trends datasets</h1>
+    <!-- Radio buttons -->
+    <!-- <select id="dropdown"></select> -->
     <input type="radio" id="option1" name="options" value="M" checked>
     <label for="option1">Monthly</label>
-
     <input type="radio" id="option2" name="options" value="Q">
     <label for="option2">Quarterly</label>
-
     <input type="radio" id="option3" name="options" value="A">
     <label for="option3">Annualy</label>
 
 
-    <button id="chart-butten" onclick="modifyIndicator()">Plot</button>
+    <!-- Input date range -->
+    <p>Select a date range:</p>
+    <label for="startDate">Start date:</label>
+    <input type="date" id="startDate" name="startDate">
+    <label for="endDate">End date:</label>
+    <input type="date" id="endDate" name="endDate">
+
+
+    <button id="updateChart">Update Chart</button>
+    <script src="multiselect-dropdown.js" ></script>
+
+    <div class="multiselect-search">
+        <input type="text" id="AreaSearchInput" placeholder="Search Available Areas">
+      </div>
+    <div class="multiselect">
+
+        <div class="area-multiselect-options" id="AreasOptionsContainer">
+        </div>
+      </div>
+
+      <div class="multiselect-search">
+        <input type="text" id="IndicatorSearchInput" placeholder="Search Available Indicators">
+      </div>
+    <div class="multiselect">
+
+        <div class="indicator-multiselect-options" id="IndicatorsOptionsContainer">
+        </div>
+      </div>
+
+    <p>Chart</p>
+
     <div id="chart" style="width:800px;height:300px;"></div>
+
+
     <script src="index.js"></script>
   </body>
 </html>

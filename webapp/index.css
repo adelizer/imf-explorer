@@ -1,0 +1,26 @@
+.multiselect {
+    width: 500px;
+    height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  .multiselect label {
+    display: block;
+    padding: 10px;
+  }
+  
+  .multiselect-search {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+  }
+  
+  .multiselect-search input[type="text"] {
+    width: 100%;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    padding: 10px;
+  }
+  
