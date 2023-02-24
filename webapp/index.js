@@ -1,4 +1,5 @@
 // elements
+const baseUrl = "http://ec2-52-91-178-165.compute-1.amazonaws.com:8000/"
 let chart = document.getElementById('chart');
 const AreaSearchInput = document.getElementById("AreaSearchInput");
 const AreasOptionsContainer = document.getElementById("AreasOptionsContainer");
@@ -92,6 +93,7 @@ function updateSelectedIndicator(c){
     if (selectedIndicator.endsWith("+")){
         selectedIndicator = selectedIndicator.slice(0, -1)
     }
+    selectedIndicator = selectedIndicator.replace("++", "+")
     console.log(selectedIndicator)
     // selectedIndicator = newValue;
 
@@ -119,6 +121,7 @@ function updateSelectedArea(c){
     if (selectedArea.endsWith("+")){
         selectedArea = selectedArea.slice(0, -1)
     }
+    selectedArea = selectedArea.replace("++", "+")
     // let options = document.querySelectorAll(".area-multiselect-options label");
 
     // options.forEach(function(option) {
@@ -132,7 +135,7 @@ function updateSelectedArea(c){
 
 
 function populateAreas() {
-    fetch("http://localhost:8000/available-areas")
+    fetch(baseUrl + "available-areas")
     .then(res => res.json())
     .then(areas => {
         console.log("creating areas elements")
@@ -154,7 +157,7 @@ function populateAreas() {
 }
 
 function populateIndicators() {
-    fetch("http://localhost:8000/available-indicators")
+    fetch(baseUrl + "available-indicators")
     .then(res => res.json())
     .then(areas => {
         console.log("creating indicator elements")
@@ -188,7 +191,7 @@ function queryIndicator() {
             q: q,
         })
       }
-    fetch("http://localhost:8000/query", options)
+    fetch(baseUrl + "query", options)
     .then(res => res.json())
     .then(res => {
     if (res.data.length > 0){

@@ -96,7 +96,11 @@ class IFSDataset:
 
     def query_with_string(self, q=""):
         indicator = q.split(".")[-1].split("?")[0]
-        assert self.is_valid_query_indicator(indicator), f"Query must contain valid indicator not {indicator}"
         query_string = f"IFS/{q}"
         raw = requests.get(os.path.join(IMF_BASE_URL, "CompactData", query_string)).json()
         return self.process_raw_response(raw, indicator)
+
+    def run_query(self, q=""):
+        query_string = f"IFS/{q}"
+        raw = requests.get(os.path.join(IMF_BASE_URL, "CompactData", query_string)).json()
+        return raw['CompactData']['DataSet']["Series"]
