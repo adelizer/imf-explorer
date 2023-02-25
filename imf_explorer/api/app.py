@@ -153,7 +153,8 @@ async def get_data(item: Item):
                 continue
             else:
                 tmp = [[obs.get('@TIME_PERIOD'), obs.get('@OBS_VALUE')] for obs in series['Obs']]
-                col_name = f'{series["@REF_AREA"]}'
+                codes_dict["CL_AREA_IFS"]
+                col_name = f'{codes_dict["CL_AREA_IFS"][series["@REF_AREA"]]}'
                 tmp_df = pd.DataFrame(tmp, columns=["date", col_name])
                 tmp_df[col_name] = tmp_df[col_name].astype(float).pct_change()
                 df = df.merge(tmp_df, on="date", how="left")
