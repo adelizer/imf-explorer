@@ -3,8 +3,6 @@ FROM python:3.9-slim
 ENV PYTHONUNBUFFERED 1
 EXPOSE 8000
 WORKDIR /imf_explorer
-# Copy requirements from host, to docker container in /app
-COPY ./requirements.txt .
 # Copy everything from ./src directory to /app in the container
 COPY ./ ./
 
