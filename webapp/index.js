@@ -1,5 +1,4 @@
-const url = document.currentScript.getAttribute('url')
-console.log(url)
+const url = "http://localhost:8000/"
 const AreaSearchInput = document.getElementById("area-search");
 const AreasOptionsContainer = document.getElementById("multiselect-area");
 const IndicatorSearchInput = document.getElementById("indicator-search");
@@ -7,7 +6,9 @@ const IndicatorsOptionsContainer = document.getElementById("multiselect-indicato
 const radioButtons = document.querySelectorAll('input[type="radio"]');
 const downloadButton = document.getElementById("download-data");
 const correlationButton = document.getElementById("correlation-button");
-// global variables
+const updateChartButton = document.getElementById("update-chart-button");
+const queryMethod = 'POST';
+const queryHeaders = {'Content-Type': 'application/json'}
 var selectedFrequency = "M"
 var startDateValue = "2001-01-01"
 var endDateValue = "2023-01-01"
@@ -37,26 +38,47 @@ for (const button of radioButtons) {
         queryIndicator();
     });
 }
+function showErrorMessage(errorElement, msg) {
+  errorElement.textContent = msg
+  errorElement.classList.add("error");
+  setTimeout(function() {
+      errorElement.textContent = "";
+      errorElement.classList.remove("error");
+    }, 3000);
+}
+function validateQuery(){
+  const errorElement = document.getElementById("error-message");
+  if (selectedArea.length == 0  && selectedIndicator.length == 0) {
+    let message = `Select at least 1 area or 1 indicator to download the data you have selected the following areas`
+      showErrorMessage(errorElement, message);
+      return false;
+    }
+  if ((selectedArea.split("+").length > 1 && selectedIndicator.length == 0) || (selectedIndicator.split("+").length > 1 && selectedArea.length == 0)){
+    let message = `Please refine the query more or remove multiple areas/indicators selected`
+    showErrorMessage(errorElement, message);
+    return false;
+  }
+  return true;
+}
+updateChartButton.addEventListener("click", function() {
+  if (! validateQuery()){
+    return;
+  }
+  queryIndicator();
+})
 correlationButton.addEventListener("click", function() {
     let indicatorList = selectedIndicator.split("+")
-    if (indicatorList.length > 1) {
-            const errorMessage = document.getElementById("correlation-error-message");
-            errorMessage.textContent = "Select only 1 indicator to calculate correlation, you have selected: " + selectedIndicator;
-            errorMessage.classList.add("error");
-            setTimeout(function() {
-                errorMessage.textContent = "";
-                errorMessage.classList.remove("error");
-              }, 3000);
+    if (indicatorList.length > 1  || selectedIndicator.length == 0) {
+      const errorElement = document.getElementById("correlation-error-message");
+      let message = "Select only 1 indicator to calculate correlation, you have selected: " + selectedIndicator;
+      showErrorMessage(errorElement, message);
+      return;
     }
     let q = `${selectedFrequency}..${selectedIndicator}?startPeriod=${startDateValue}&endPeriod=${endDateValue}`
     let options = {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            q: q,
-        })
+        method: queryMethod,
+        headers: queryHeaders,
+        body: JSON.stringify({q: q,})
       }
     fetch(url + "query-correlation", options)
     .then(res => res.json())
@@ -64,8 +86,7 @@ correlationButton.addEventListener("click", function() {
       if (res.x.length > 0){
         var data = [
         {
-          z: res.z,
-          x: res.x,
+          z: res.z, x: res.x,
           y: res.y,
           type: 'heatmap',
           hoverongaps: false
@@ -76,76 +97,63 @@ correlationButton.addEventListener("click", function() {
     })
 })
 downloadButton.addEventListener("click", function() {
-    console.log("download requested")
+  if (! validateQuery()){
+    return;
+  }
     let q = `${selectedFrequency}.${selectedArea}.${selectedIndicator}?startPeriod=${startDateValue}&endPeriod=${endDateValue}`
     let options = {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            q: q,
-        })
+        headers: queryHeaders,
+        body: JSON.stringify({q: q,})
     }
     fetch(url + "query-csv", options)
     .then(res => res.blob())
     .then(res => {
-        // create a new blob object from the CSV data
         const blob = new Blob([res], {type: 'text/csv'});
-        // create a URL object from the blob
-        const url = URL.createObjectURL(blob);
-        // create a new anchor tag with the download attribute
         const link = document.createElement('a');
-        link.href = url;
+        link.href = URL.createObjectURL(blob);
         link.download = 'data.csv';
-        // trigger a click event on the anchor tag to download the file
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        // revoke the URL object to free up memory
         URL.revokeObjectURL(url);
     })
 })
-AreaSearchInput.addEventListener("input", function() {
-    const searchTerm = this.value.toLowerCase();
-    const regex = new RegExp(searchTerm, "gi");
-    const options = AreasOptionsContainer.querySelectorAll("label");
-    options.forEach(function(option) {
-        console.log(option)
+function updateList(options, searchTerm) {
+  const regex = new RegExp(searchTerm, "gi");
+  options.forEach(function(option) {
       if (regex.test(option.textContent.toLowerCase())) {
         option.style.display = "block";
       } else {
         option.style.display = "none";
       }
     });
+}
+AreaSearchInput.addEventListener("input", function() {
+    const searchTerm = this.value.toLowerCase();
+    const options = AreasOptionsContainer.querySelectorAll("label");
+    updateList(options, searchTerm);
   });
 IndicatorSearchInput.addEventListener("input", function() {
     const searchTerm = this.value.toLowerCase();
-    const regex = new RegExp(searchTerm, "gi");
     let options = IndicatorsOptionsContainer.querySelectorAll("label");
-    options.forEach(function(option) {
-      if (regex.test(option.textContent.toLowerCase())) {
-        option.style.display = "block";
-      } else {
-        option.style.display = "none";
-      }
-    });
+    updateList(options, searchTerm);
   });
-function updateSelectedIndicator(c){
-    console.log(c.srcElement)
-    if (c.srcElement.checked == true){
-        selectedIndicator = selectedIndicator + `+${c.srcElement.value}`
-    } else{
-        selectedIndicator = selectedIndicator.replace(c.srcElement.value, '')
+function cleanField(field) {
+  if (field.startsWith("+")){
+      field = field.substring(1)
     }
-    if (selectedIndicator.startsWith("+")){
-        selectedIndicator = selectedIndicator.substring(1)
+  if (field.startsWith("+")){
+      field = field.substring(1)
     }
-    if (selectedIndicator.endsWith("+")){
-        selectedIndicator = selectedIndicator.slice(0, -1)
+    if (field.endsWith("+")){
+      field = field.slice(0, -1)
     }
-    selectedIndicator = selectedIndicator.replace("++", "+")
-    queryIndicator();
+    if (field.endsWith("+")){
+      field = field.slice(0, -1)
+    }
+    field = field.replace("++", "+");
+    return field
 }
 function updateSelectedArea(c){
     if (c.srcElement.checked == true){
@@ -153,21 +161,20 @@ function updateSelectedArea(c){
     } else{
         selectedArea = selectedArea.replace(c.srcElement.value, '')
     }
-    if (selectedArea.startsWith("+")){
-        selectedArea = selectedArea.substring(1)
+    selectedArea = cleanField(selectedArea);
+}
+function updateSelectedIndicator(c){
+    if (c.srcElement.checked == true){
+        selectedIndicator = selectedIndicator + `+${c.srcElement.value}`
+    } else{
+      selectedIndicator = selectedIndicator.replace(c.srcElement.value, '')
     }
-    if (selectedArea.endsWith("+")){
-        selectedArea = selectedArea.slice(0, -1)
-    }
-    selectedArea = selectedArea.replace("++", "+")
-    queryIndicator();
-    console.log("selected area: " + selectedArea)
+    selectedIndicator = cleanField(selectedIndicator);
 }
 function populateAreas() {
     fetch(url + "available-areas")
     .then(res => res.json())
     .then(areas => {
-        console.log("creating areas elements")
         for (const key in areas) {
             const label = document.createElement("label");
             const checkbox = document.createElement("input");
@@ -188,7 +195,6 @@ function populateIndicators() {
     fetch(url + "available-indicators")
     .then(res => res.json())
     .then(areas => {
-        console.log("creating indicator elements")
         for (const key in areas) {
             const label = document.createElement("label");
             const checkbox = document.createElement("input");
@@ -199,13 +205,18 @@ function populateIndicators() {
             IndicatorsOptionsContainer.appendChild(label);
             checkbox.addEventListener("change", updateSelectedIndicator)
             if (key == "PMP_IX") {
-                console.log("PMP_IX found, setting as initial value")
                 checkbox.checked = true;
             }
           }
     })
 }
 function queryIndicator() {
+  if (selectedArea.length == 0  && selectedIndicator.length == 0) {
+      const errorElement = document.getElementById("error-message");
+      let message = `Select at least 1 area or 1 indicator to download the data you have selected the following areas`
+      showErrorMessage(errorElement, message);
+      return;
+    }
     let q = `${selectedFrequency}.${selectedArea}.${selectedIndicator}?startPeriod=${startDateValue}&endPeriod=${endDateValue}`
     console.log("query string: " + q)
     let options = {
@@ -243,7 +254,6 @@ function queryIndicator() {
                 },
                 name: curr["identifier"],
             };
-            // downloadData = {"date": curr["x"], "indicator": curr["y"]}
             delete requiredData[curr["identifier"]]
             traces.push(trace);
         }
@@ -261,13 +271,9 @@ function queryIndicator() {
             Plotly.newPlot("chart", traces, layout);
         };
         if (Object.keys(requiredData).length > 0){
-            const errorMessage = document.getElementById("error-message");
-            errorMessage.textContent = "IMF did not provide data for the following query: " + Object.keys(requiredData);
-            errorMessage.classList.add("error");
-            setTimeout(function() {
-                errorMessage.textContent = "";
-                errorMessage.classList.remove("error");
-              }, 3000);
+            const errorElement = document.getElementById("error-message");
+            let message =  "IMF did not provide the full data for the following query: " + Object.keys(requiredData)
+            showErrorMessage(errorElement, message);
         }
     })
 }
