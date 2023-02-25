@@ -86,11 +86,14 @@ async def get_data(item: Item):
             data = [data]
         data_list = []
         for series in data:
-            if len(series["Obs"]) <= 1:
+            if "Obs" not in series or len(series["Obs"]) <= 1:
                 continue
             else:
-                tmp = [[obs.get('@TIME_PERIOD'), obs.get('@OBS_VALUE')] for obs in series['Obs']]
-                data_list.append({"identifier": f'{series["@FREQ"]}-{series["@REF_AREA"]}-{series["@INDICATOR"]}', "x": [x[0] for x in tmp], "y": [x[1] for x in tmp]})
+                try:
+                    tmp = [[obs.get('@TIME_PERIOD'), obs.get('@OBS_VALUE')] for obs in series['Obs']]
+                    data_list.append({"identifier": f'{series["@FREQ"]}-{series["@REF_AREA"]}-{series["@INDICATOR"]}', "x": [x[0] for x in tmp], "y": [x[1] for x in tmp]})
+                except:
+                    pass
 
         return {"data": data_list}
     except:
@@ -114,12 +117,15 @@ async def get_data(item: Item):
         if isinstance(data, dict):
             data = [data]
         for series in data:
-            if len(series["Obs"]) <= 1:
+            if "Obs" not in series or len(series["Obs"]) <= 1:
                 continue
             else:
-                tmp = [[obs.get('@TIME_PERIOD'), obs.get('@OBS_VALUE')] for obs in series['Obs']]
-                tmp_df = pd.DataFrame(tmp, columns=["date", f'{series["@FREQ"]}-{series["@REF_AREA"]}-{series["@INDICATOR"]}'])
-                df = df.merge(tmp_df, on="date", how="left")
+                try:
+                    tmp = [[obs.get('@TIME_PERIOD'), obs.get('@OBS_VALUE')] for obs in series['Obs']]
+                    tmp_df = pd.DataFrame(tmp, columns=["date", f'{series["@FREQ"]}-{series["@REF_AREA"]}-{series["@INDICATOR"]}'])
+                    df = df.merge(tmp_df, on="date", how="left")
+                except:
+                    pass
         output = df.to_csv(index=False)
         return StreamingResponse(
             iter([output]),
@@ -133,7 +139,6 @@ async def get_data(item: Item):
 @app.post("/query-correlation")
 async def get_data(item: Item):
     q = item.dict()["q"]
-    print(q)
     query_string = f"http://dataservices.imf.org/REST/SDMX_JSON.svc/CompactData/IFS/{q}"
     if q.split(".")[0] == "M":
         date_range = month_range
@@ -152,12 +157,14 @@ async def get_data(item: Item):
             if "Obs" not in series or len(series["Obs"]) <= 1:
                 continue
             else:
-                tmp = [[obs.get('@TIME_PERIOD'), obs.get('@OBS_VALUE')] for obs in series['Obs']]
-                codes_dict["CL_AREA_IFS"]
-                col_name = f'{codes_dict["CL_AREA_IFS"][series["@REF_AREA"]]}'
-                tmp_df = pd.DataFrame(tmp, columns=["date", col_name])
-                tmp_df[col_name] = tmp_df[col_name].astype(float).pct_change()
-                df = df.merge(tmp_df, on="date", how="left")
+                try:
+                    tmp = [[obs.get('@TIME_PERIOD'), obs.get('@OBS_VALUE')] for obs in series['Obs']]
+                    col_name = f'{codes_dict["CL_AREA_IFS"][series["@REF_AREA"]]}'
+                    tmp_df = pd.DataFrame(tmp, columns=["date", col_name])
+                    tmp_df[col_name] = tmp_df[col_name].astype(float).pct_change()
+                    df = df.merge(tmp_df, on="date", how="left")
+                except:
+                    pass
         corr = df.drop("date", axis=1).corr()
         corr = corr.round(decimals=2).fillna(0)
         return {"x": corr.columns.to_list(),
